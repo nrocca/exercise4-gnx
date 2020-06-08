@@ -1,18 +1,12 @@
-const graphql = require('graphql');
+const graphql = require("graphql");
 
-const {
-  GraphQLEnumType,
-} = graphql;
+const { GraphQLEnumType } = graphql;
 
 const SexTypeEnum = new GraphQLEnumType({
-  name: 'SexTypeEnum',
+  name: "SexTypeEnum",
   values: {
-    M: {
-      value: 'Masculine',
-    },
-    F: {
-      value: 'Femenine',
-    }
+    M: { value: "Masculine" },
+    F: { value: "Femenine" },
   },
 });
 

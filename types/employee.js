@@ -1,47 +1,36 @@
-const graphql=require('graphql');
-const gnx=require('@simtlix/gnx');
-const Employees=require('../models/employees').Employees;
+const graphql = require("graphql");
+const gnx = require("@simtlix/gnx");
+const Employees = require("../models/employees").Employees;
+
+const SexType = require("./enum/sexType");
 
 const {
-    CantBeTwoEmployeesWithSameDNI,
-    EmployeesMustBeOver18
-} = require('../validators/employee.validator');
+  CantRepeatDNI,
+  EmployeesMustBeOver18,
+} = require("../validators/employee.validator.js");
 
-const {
-    GraphQLObjectType,
-    GraphQLNonNull,
-    GraphQLString,
-    GraphQLInt
-}=graphql;
-const SexType=require('./enum/sexType');
+const { GraphQLObjectType, GraphQLString, GraphQLInt, GraphQLID } = graphql;
 
-const EmployeeType=new GraphQLObjectType({
-    name:'Employee Type',
-    description:'Represents Employees',
-    extensions:{
-        validations:{
-            'CREATE':
-            [
-                CantBeTwoEmployeesWithSameDNI,
-                EmployeesMustBeOver18
-            ],
-            'UPDATE':
-            [
-                CantBeTwoEmployeesWithSameDNI,
-                EmployeesMustBeOver18
-            ]
-        }
+const EmployeeType = new GraphQLObjectType({
+  name: "EmployeeType",
+  description: "Represents Employees",
+  extensions: {
+    validations: {
+      'CREATE': [CantRepeatDNI, EmployeesMustBeOver18],
+      'UPDATE': [CantRepeatDNI, EmployeesMustBeOver18],
     },
-    fields:() => ({
-        dni:GraphQLInt,
-        birth_date:GraphQLString,
-        first_name:GraphQLString,
-        last_name:GraphQLString,
-        gender:SexType,
-        hire_date:GraphQLString
-    })
+  },
+  fields: () => ({
+    id: { type: GraphQLID },
+    dni: { type: GraphQLInt },
+    birth_date: { type: GraphQLString },
+    first_name: { type: GraphQLString },
+    last_name: { type: GraphQLString },
+    gender: { type: SexType },
+    hire_date: { type: GraphQLString },
+  }),
 });
 
-gnx.connect(Employees,EmployeeType,'employee','employees');
+gnx.connect(Employees, EmployeeType, "employee", "employees");
 
-module.exports=EmployeeType;
+module.exports = EmployeeType;

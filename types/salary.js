@@ -1,40 +1,51 @@
-const graphql=require('graphql');
-const gnx=require('@simtlix/gnx');
-const Salaries=require('../models/salaries').Salaries;
-const Employees=require('../models/employees').Employees;
-const { timeObjectFields }=require('./typesTimeExtension/timeGraphQLObjectType');
+const graphql = require("graphql");
+const gnx = require("@simtlix/gnx");
+const Salaries = require("../models/salaries").Salaries;
+const Employees = require("../models/employees").Employees;
+
+const EmployeeType = require("./employee");
 
 const {
-    GraphQLObjectType,
-    GraphQLNonNull,
-    GraphQLString,
-    GraphQLFloat,
-    GraphQLList
-}=graphql;
-const EmployeeType=require('./employee'); 
+  From_DateMustBeSmallerThanTo_Date,
+} = require("../validators/time.validator");
+const {
+  CannotDeleteDataFromAnExistingEmployee,
+} = require("../validators/delete.validator");
 
-const SalaryType=new GraphQLObjectType({
-    name:'Salary Type',
-    description:'Represents Salaries',
-    fields:()=>Object.assign(timeObjectFields,{
-        employee:{
-            type:EmployeeType,
-            extensions:{
-                relation:{
-                    embedded:false,
-                    connectionField:'EmpID'
-                }
-            },
-            resolve:(parent,args)=>{
-                return Employees.findById({'EmpID':parent.id})
-            }
+const { GraphQLObjectType, GraphQLFloat, GraphQLID, GraphQLString } = graphql;
+
+const SalaryType = new GraphQLObjectType({
+  name: "SalaryType",
+  description: "Represents Salaries",
+  extensions: {
+    validations: {
+      'CREATE': [From_DateMustBeSmallerThanTo_Date],
+      'UPDATE': [From_DateMustBeSmallerThanTo_Date],
+      'DELETE': [CannotDeleteDataFromAnExistingEmployee],
+    },
+  },
+  fields: () => ({
+    id: { type: GraphQLID },
+    from_date: { type: GraphQLString },
+    to_date: { type: GraphQLString },
+    employee: {
+      type: EmployeeType,
+      extensions: {
+        relation: {
+          embedded: false,
+          connectionField: "empID",
         },
-        salary:{
-            type:GraphQLFloat
-        }
-    })
+      },
+      resolve: (parent, args) => {
+        return Employees.findById(parent.empID);
+      },
+    },
+    salary: {
+      type: GraphQLFloat,
+    },
+  }),
 });
 
-gnx.connect(Salaries,SalaryType,'salary','salaries');
+gnx.connect(Salaries, SalaryType, "salary", "salaries");
 
-module.exports=SalaryType;
+module.exports = SalaryType;

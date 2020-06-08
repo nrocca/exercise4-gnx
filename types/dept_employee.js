@@ -1,70 +1,74 @@
-const graphql=require('graphql');
-const gnx=require('@simtlix/gnx');
-const Dept_employees=require('../models/dept_employees').Dept_employees;
-const Departaments=require('../models/departments').Departaments;
-const Employees=require('../models/employees').Employees;
-const { timeObjectFields }=require('./typesTimeExtension/timeGraphQLObjectType');
+const graphql = require("graphql");
+const gnx = require("@simtlix/gnx");
+const Dept_employees = require("../models/dept_employees").Dept_employees;
+const Departaments = require("../models/departments").Departaments;
+const Employees = require("../models/employees").Employees;
+
+const EmployeeType = require("./employee");
+const DepartamentType = require("./departament");
 
 const {
-    CantBeTwoEmployeesInTheSameDeptAtOnce,
-    OneEmployeeCantHaveTwoTitlesInOneDept
-}=require('../validators/dept_employee.validator');
-
+  OneEmployeeCantHaveTwoTitlesInOneDeptAtOnce,
+} = require("../validators/dept_employee.validator");
 const {
-    GraphQLObjectType,
-    GraphQLNonNull,
-    GraphQLString,
-    GraphQLInt,
-    GraphQLList
-}=graphql;
-const EmployeeType=require('./employee');
-const DepartamentType=require('./departament');
+  From_DateMustBeSmallerThanTo_Date,
+} = require("../validators/time.validator");
+const {
+  CantDeleteDataWithDeptOrEmpAttached,
+} = require("../validators/delete.validator");
 
-const Dept_EmployeeType=new GraphQLObjectType({
-    name:'Dept Employee Type',
-    description:"Represents Dept's Employee",
-    extensions:{
-        validations:{
-            'CREATE':
-            [
-                CantBeTwoEmployeesInTheSameDeptAtOnce,
-                OneEmployeeCantHaveTwoTitlesInOneDept
-            ],
-            'UPDATE':
-            [
-                CantBeTwoEmployeesInTheSameDeptAtOnce,
-                OneEmployeeCantHaveTwoTitlesInOneDept
-            ]
-        }
+const { GraphQLObjectType, GraphQLID, GraphQLString } = graphql;
+
+const Dept_EmployeeType = new GraphQLObjectType({
+  name: "Dept_employeeType",
+  description: "Represents Dept's Employee",
+  extensions: {
+    validations: {
+      'CREATE': [
+        From_DateMustBeSmallerThanTo_Date,
+        OneEmployeeCantHaveTwoTitlesInOneDeptAtOnce,
+      ],
+      'UPDATE': [
+        From_DateMustBeSmallerThanTo_Date,
+        OneEmployeeCantHaveTwoTitlesInOneDeptAtOnce,
+      ],
+      'DELETE': [CantDeleteDataWithDeptOrEmpAttached],
     },
-    fields: ()=>Object.assign(timeObjectFields,{
-        employee:{
-            type:EmployeeType,
-            extensions:{
-                relation:{
-                    embedded:false,
-                    connectionField:'EmpID'
-                }
-            },
-            resolve:(parent,args)=>{
-                return Employees.findById({'EmpID':parent.id})
-            }
+  },
+  fields: () => ({
+    id: { type: GraphQLID },
+    from_date: { type: GraphQLString },
+    to_date: { type: GraphQLString },
+    employee: {
+      type: EmployeeType,
+      extensions: {
+        relation: {
+          connectionField: "empID",
         },
-        dept:{
-            type:DepartamentType,
-            extensions:{
-                relation:{
-                    embedded:false,
-                    connectionField:'DeptID'
-                }
-            },
-            resolve:(parent,args)=>{
-                return Departaments.findById({'DeptID':parent.id})
-            }
-        }
-    })
+      },
+      resolve: (parent, args) => {
+        return Employees.findById(parent.empID);
+      },
+    },
+    dept: {
+      type: DepartamentType,
+      extensions: {
+        relation: {
+          connectionField: "deptID",
+        },
+      },
+      resolve: (parent, args) => {
+        return Departaments.findById(parent.deptID);
+      },
+    },
+  }),
 });
 
-gnx.connect(Employees,EmployeeType,'dept_employee','dept_employees');
+gnx.connect(
+  Dept_employees,
+  Dept_EmployeeType,
+  "dept_employee",
+  "dept_employees"
+);
 
-module.exports=Dept_EmployeeType;
+module.exports = Dept_EmployeeType;

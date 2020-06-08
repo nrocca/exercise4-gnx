@@ -2,15 +2,15 @@ const express=require('express');
 const gnx=require('@simtlix/gnx');
 const app=express();
 
-const graphqlHTTP=require('express-graphql');
+const graphqlHTTP = require('express-graphql');
 
 const mongoose=require('mongoose');
-mongoose.plugin(require('./plugins/timePluginSchema'));
 
-mongoose.connect('mongodb://localhost:27017,localhost:27018,localhost:27019/example', { replicaSet: 'rs' });
+//mongoose.connect('mongodb://localhost:27017,localhost:27018,localhost:27019/example', { replicaSet: 'rs' });
+mongoose.connect('mongodb://DESKTOP-8DOUASS:27017,DESKTOP-8DOUASS:27018,DESKTOP-8DOUASS:27019/example', { replicaSet: 'rs' });
 
 mongoose.connection.once('open',()=>{
-    console.log("DB's up!");
+    console.log("DataBase is connected!");
 });
 
 const types=require('./types');
